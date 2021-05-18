@@ -93,6 +93,25 @@ def removeCols(nCols, image, resize=False):
         return img.resize(image.size)
     return img
 
+def joinCols(nCols, nTimes, image):
+    if nTimes <= 1:
+        a = np.array(image)
+        sqSize = image.size[0] // (nCols)
+        empty = []
+        for x in range(0, image.size[0], sqSize):
+            empty.append(a[0:image.size[1], x:x+sqSize])
+        odds = np.hstack([empty[i] for i in range(1, len(empty), 2)]) #do odds with the full length since a leftover is only even (doesn't matter tho)
+        evens = np.hstack([empty[i] for i in range(0, nCols, 2)])#do evens with length of cols since a leftover could occur
+        return Image.fromarray(np.hstack([evens, odds]))
+    else:
+        #image = joinCols(nCols, nTimes - 1, image).rotate(3 * 90, expand=True)
+        #image = joinCols(nCols, 1, joinCols(nCols, nTimes-1, image).rotate(3 * 90, expand=True))
+        image = joinCols(nCols, nTimes - 1, image)
+        if nTimes % 2 == 0:
+            image = image.rotate(3 * 90, expand=True)
+        image = joinCols(nCols, 1, image)
+        return image.rotate(90, expand=True)
+
 def mosaic(sqCount, image, skip=1):
     """ sqCount is the amount of squares in the x-axis (must be at least 2)."""
     sqSize = image.size[0] // sqCount
@@ -207,8 +226,9 @@ def edge(image, th=220):
 def main():
     args = sys.argv
     img = Image.open('media/input/%s' % args[1])
-    images=[rowCol(0.01, img), rowCol(0.05, img),rowCol(0.25, img), partition(0.75, 6, img), partition(0.5, 6, img), mosaic(15, img, 50),
-            dither(img), jpeg(img), meta_jpeg(img), mosaic(40, img, 50), removeCols(5, img, True), edge(img)] #specify your filters and settings here
+    '''images=[rowCol(0.01, img), rowCol(0.05, img),rowCol(0.25, img), partition(0.75, 6, img), partition(0.5, 6, img), mosaic(15, img, 50),
+            dither(img), jpeg(img), meta_jpeg(img), mosaic(40, img, 50), removeCols(5, img, True), edge(img)] #specify your filters and settings here'''
+    images = [ansi(80, img, "Deep Space Network"), ansi(80, img), ansi(40, img)]
     for count, x in enumerate(images):
         isImage = True
         try:
